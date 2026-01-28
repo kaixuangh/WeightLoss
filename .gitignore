@@ -62,12 +62,6 @@ freeline_core/
 # Mac system files
 .DS_Store
 
-# symbol link module
-/event-center/
-/jscore/
-/ux/
-/sinauserlib/
-/actionlogsdk/
 
 *.pyc
 
@@ -75,6 +69,4 @@ freeline_core/
 fbConfig.local.json
 fbConfig.project.json
 
-/snccv2
-/flutter
 .idea/codeStyles/Project.xml
