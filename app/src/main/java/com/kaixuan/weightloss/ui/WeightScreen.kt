@@ -80,7 +80,7 @@ fun WeightScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
                     )
                 ) {
                     Column(
@@ -90,7 +90,7 @@ fun WeightScreen(
                         Text(
                             text = "当前状态",
                             style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
 
                         Row(
@@ -102,12 +102,12 @@ fun WeightScreen(
                                 Text(
                                     text = "当前体重",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
                                 )
                                 Text(
                                     text = "%.1f ${unit.label}".format(currentWeightDisplay),
                                     style = MaterialTheme.typography.titleLarge,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer
                                 )
                             }
 
@@ -117,12 +117,12 @@ fun WeightScreen(
                                     Text(
                                         text = "BMI",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
                                     )
                                     Text(
                                         text = "%.1f".format(bmi),
                                         style = MaterialTheme.typography.titleLarge,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer
                                     )
                                     Text(
                                         text = bmiStatus,
@@ -142,7 +142,7 @@ fun WeightScreen(
                                     Text(
                                         text = "距离目标",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
                                     )
                                     Text(
                                         text = if (weightDiff > 0) "-%.1f ${unit.label}".format(weightDiff)
@@ -155,7 +155,7 @@ fun WeightScreen(
                                         Text(
                                             text = "目标: %.1f ${unit.label}".format(targetWeightDisplay),
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
                                         )
                                     }
                                 }

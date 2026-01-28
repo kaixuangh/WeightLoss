@@ -297,21 +297,21 @@ fun SettingsScreen(
                                 if (enabled) {
                                     // 检查通知权限 (Android 13+)
                                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                        when (ContextCompat.checkSelfPermission(
+                                        val hasPermission = ContextCompat.checkSelfPermission(
                                             context,
                                             Manifest.permission.POST_NOTIFICATIONS
-                                        )) {
-                                            PackageManager.PERMISSION_GRANTED -> {
-                                                reminderEnabled = true
-                                                viewModel.updateReminder(true, selectedHour, selectedMinute)
-                                            }
-                                            else -> {
-                                                notificationPermissionLauncher.launch(
-                                                    Manifest.permission.POST_NOTIFICATIONS
-                                                )
-                                            }
+                                        ) == PackageManager.PERMISSION_GRANTED
+
+                                        if (hasPermission) {
+                                            reminderEnabled = true
+                                            viewModel.updateReminder(true, selectedHour, selectedMinute)
+                                        } else {
+                                            notificationPermissionLauncher.launch(
+                                                Manifest.permission.POST_NOTIFICATIONS
+                                            )
                                         }
                                     } else {
+                                        // Android 12 及以下不需要运行时权限
                                         reminderEnabled = true
                                         viewModel.updateReminder(true, selectedHour, selectedMinute)
                                     }
