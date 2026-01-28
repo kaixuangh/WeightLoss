@@ -18,6 +18,11 @@ private val DarkColorScheme = darkColorScheme(
     tertiary = Coral80,
     primaryContainer = Color(0xFF4E2600),
     onPrimaryContainer = Orange80,
+    surface = Color(0xFF2D2520),
+    surfaceVariant = Color(0xFF3D3530),
+    background = Color(0xFF1C1815),
+    secondaryContainer = Color(0xFF4E3D35),
+    onSecondaryContainer = Color(0xFFFFE0C0),
 )
 
 private val LightColorScheme = lightColorScheme(

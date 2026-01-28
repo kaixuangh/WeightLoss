@@ -27,7 +27,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
-fun WeightChart(records: List<WeightRecord>) {
+fun WeightChart(records: List<WeightRecord>, weightUnit: com.kaixuan.weightloss.data.WeightUnit = com.kaixuan.weightloss.data.WeightUnit.KG) {
     val primaryColor = MaterialTheme.colorScheme.primary
     val onSurfaceColor = MaterialTheme.colorScheme.onSurface
     val surfaceColor = MaterialTheme.colorScheme.surface
@@ -36,11 +36,11 @@ fun WeightChart(records: List<WeightRecord>) {
 
     val dateFormat = remember { SimpleDateFormat("MM/dd", Locale.getDefault()) }
 
-    remember(records) {
+    remember(records, weightUnit) {
         if (records.isNotEmpty()) {
             modelProducer.tryRunTransaction {
                 lineSeries {
-                    series(records.map { it.weight.toDouble() })
+                    series(records.map { (it.weight * weightUnit.factor).toDouble() })
                 }
             }
         }
@@ -61,7 +61,8 @@ fun WeightChart(records: List<WeightRecord>) {
             if (index in records.indices) {
                 val record = records[index]
                 val date = dateFormat.format(Date(record.date))
-                "$date: %.1f kg".format(record.weight)
+                val displayWeight = record.weight * weightUnit.factor
+                "$date: %.1f ${weightUnit.label}".format(displayWeight)
             } else ""
         },
     )

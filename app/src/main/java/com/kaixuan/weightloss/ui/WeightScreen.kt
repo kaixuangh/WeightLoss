@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,16 +17,35 @@ import androidx.compose.ui.unit.dp
 import com.kaixuan.weightloss.TimeRange
 import com.kaixuan.weightloss.WeightViewModel
 import com.kaixuan.weightloss.data.WeightRecord
-import java.text.SimpleDateFormat
-import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WeightScreen(viewModel: WeightViewModel) {
+fun WeightScreen(
+    viewModel: WeightViewModel,
+    onSettingsClick: () -> Unit
+) {
     val records by viewModel.records.collectAsState()
     val selectedRange by viewModel.selectedRange.collectAsState()
+    val settings by viewModel.settings.collectAsState()
+    val latestWeight by viewModel.latestWeight.collectAsState()
+
     var weightInput by remember { mutableStateOf("") }
     var showError by remember { mutableStateOf(false) }
+
+    val unit = settings.weightUnit
+
+    // 计算目标差距
+    val currentWeightDisplay = latestWeight?.let { viewModel.convertWeight(it, unit) }
+    val targetWeightDisplay = if (settings.targetWeight > 0) {
+        viewModel.convertWeight(settings.targetWeight, unit)
+    } else null
+    val weightDiff = if (currentWeightDisplay != null && targetWeightDisplay != null && targetWeightDisplay > 0) {
+        currentWeightDisplay - targetWeightDisplay
+    } else null
+
+    // 计算 BMI
+    val bmi = latestWeight?.let { viewModel.calculateBMI(it, settings.height) } ?: 0f
+    val bmiStatus = viewModel.getBMIStatus(bmi)
 
     Scaffold(
         topBar = {
@@ -33,7 +54,16 @@ fun WeightScreen(viewModel: WeightViewModel) {
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                ),
+                actions = {
+                    IconButton(onClick = onSettingsClick) {
+                        Icon(
+                            Icons.Default.Settings,
+                            contentDescription = "设置",
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
             )
         }
     ) { paddingValues ->
@@ -45,6 +75,96 @@ fun WeightScreen(viewModel: WeightViewModel) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // 当前状态卡片 (BMI + 目标)
+            if (latestWeight != null && (bmi > 0 || weightDiff != null)) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = "当前状态",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            // 当前体重
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = "当前体重",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                )
+                                Text(
+                                    text = "%.1f ${unit.label}".format(currentWeightDisplay),
+                                    style = MaterialTheme.typography.titleLarge,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+
+                            // BMI
+                            if (bmi > 0) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(
+                                        text = "BMI",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                    )
+                                    Text(
+                                        text = "%.1f".format(bmi),
+                                        style = MaterialTheme.typography.titleLarge,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                    Text(
+                                        text = bmiStatus,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = when {
+                                            bmi < 18.5 || bmi >= 28 -> MaterialTheme.colorScheme.error
+                                            bmi >= 24 -> MaterialTheme.colorScheme.tertiary
+                                            else -> MaterialTheme.colorScheme.primary
+                                        }
+                                    )
+                                }
+                            }
+
+                            // 距离目标
+                            if (weightDiff != null) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(
+                                        text = "距离目标",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                    )
+                                    Text(
+                                        text = if (weightDiff > 0) "-%.1f ${unit.label}".format(weightDiff)
+                                        else "已达成",
+                                        style = MaterialTheme.typography.titleLarge,
+                                        color = if (weightDiff > 0) MaterialTheme.colorScheme.tertiary
+                                        else MaterialTheme.colorScheme.primary
+                                    )
+                                    if (weightDiff > 0) {
+                                        Text(
+                                            text = "目标: %.1f ${unit.label}".format(targetWeightDisplay),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             // 输入体重卡片
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -68,7 +188,7 @@ fun WeightScreen(viewModel: WeightViewModel) {
                             weightInput = it
                             showError = false
                         },
-                        label = { Text("体重 (kg)") },
+                        label = { Text("体重 (${unit.label})") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         isError = showError,
                         supportingText = if (showError) {
@@ -132,9 +252,9 @@ fun WeightScreen(viewModel: WeightViewModel) {
                             )
                         }
                     } else {
-                        WeightChart(records = records)
+                        WeightChart(records = records, weightUnit = unit)
                         Spacer(modifier = Modifier.height(8.dp))
-                        WeightStats(records = records)
+                        WeightStats(records = records, weightUnit = unit)
                     }
                 }
             }
@@ -189,14 +309,15 @@ fun TimeRangeSelector(
 }
 
 @Composable
-fun WeightStats(records: List<WeightRecord>) {
+fun WeightStats(records: List<WeightRecord>, weightUnit: com.kaixuan.weightloss.data.WeightUnit) {
     if (records.isEmpty()) return
 
-    val maxWeight = records.maxOf { it.weight }
-    val minWeight = records.minOf { it.weight }
-    val avgWeight = records.map { it.weight }.average().toFloat()
-    val latestWeight = records.lastOrNull()?.weight ?: 0f
-    val firstWeight = records.firstOrNull()?.weight ?: 0f
+    val factor = weightUnit.factor
+    val maxWeight = records.maxOf { it.weight } * factor
+    val minWeight = records.minOf { it.weight } * factor
+    val avgWeight = records.map { it.weight }.average().toFloat() * factor
+    val latestWeight = (records.lastOrNull()?.weight ?: 0f) * factor
+    val firstWeight = (records.firstOrNull()?.weight ?: 0f) * factor
     val change = latestWeight - firstWeight
 
     Card(
@@ -216,12 +337,12 @@ fun WeightStats(records: List<WeightRecord>) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                StatItem("最高", "%.1f kg".format(maxWeight))
-                StatItem("最低", "%.1f kg".format(minWeight))
-                StatItem("平均", "%.1f kg".format(avgWeight))
+                StatItem("最高", "%.1f ${weightUnit.label}".format(maxWeight))
+                StatItem("最低", "%.1f ${weightUnit.label}".format(minWeight))
+                StatItem("平均", "%.1f ${weightUnit.label}".format(avgWeight))
                 StatItem(
                     "变化",
-                    "%+.1f kg".format(change),
+                    "%+.1f ${weightUnit.label}".format(change),
                     color = if (change < 0) MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.error
                 )
