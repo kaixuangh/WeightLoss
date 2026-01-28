@@ -2,6 +2,8 @@
 
 一款简洁美观的 Android 体重记录应用，帮助你追踪体重变化，实现健康目标。
 
+[![Download APK](https://img.shields.io/github/v/release/kaixuangh/WeightLoss?label=Download%20APK)](https://github.com/kaixuangh/WeightLoss/releases/latest)
+
 ## 功能特性
 
 - **体重记录** - 每日记录体重，同一天多次输入自动覆盖
