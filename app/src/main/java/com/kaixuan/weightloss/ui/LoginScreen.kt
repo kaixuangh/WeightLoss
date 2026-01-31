@@ -63,7 +63,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(48.dp))
 
             Text(
-                text = if (isLoginMode) "体重记录" else "创建账号",
+                text = if (isLoginMode) "用户登录" else "创建账号",
                 style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.primary
             )
