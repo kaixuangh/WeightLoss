@@ -200,7 +200,8 @@ class WeightViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             when (val result = apiRepository.getWeightRecords(days = range.days)) {
                 is ApiResult.Success -> {
-                    _records.value = result.data.records
+                    // 服务器返回倒序，按日期升序排列用于图表显示
+                    _records.value = result.data.records.sortedBy { it.date }
                     _latestWeight.value = result.data.statistics?.latestWeight
                 }
                 is ApiResult.Error -> {
