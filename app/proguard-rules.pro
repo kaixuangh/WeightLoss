@@ -98,3 +98,26 @@
 # ==================== App API Models ====================
 # Keep all API model classes
 -keep class com.kaixuan.weightloss.api.** { *; }
+-keepclassmembers class com.kaixuan.weightloss.api.** { *; }
+
+# Keep ApiService interface
+-keep interface com.kaixuan.weightloss.api.ApiService { *; }
+
+# Keep data classes with their fields
+-keepclassmembers class com.kaixuan.weightloss.api.AuthResponse { *; }
+-keepclassmembers class com.kaixuan.weightloss.api.AuthData { *; }
+-keepclassmembers class com.kaixuan.weightloss.api.LoginRequest { *; }
+-keepclassmembers class com.kaixuan.weightloss.api.RegisterRequest { *; }
+-keepclassmembers class com.kaixuan.weightloss.api.RefreshTokenResponse { *; }
+-keepclassmembers class com.kaixuan.weightloss.api.RefreshTokenData { *; }
+-keepclassmembers class com.kaixuan.weightloss.api.SimpleResponse { *; }
+-keepclassmembers class com.kaixuan.weightloss.api.UserSettingsResponse { *; }
+-keepclassmembers class com.kaixuan.weightloss.api.UserSettingsData { *; }
+-keepclassmembers class com.kaixuan.weightloss.api.UpdateSettingsRequest { *; }
+-keepclassmembers class com.kaixuan.weightloss.api.WeightRecordResponse { *; }
+-keepclassmembers class com.kaixuan.weightloss.api.WeightRecordData { *; }
+-keepclassmembers class com.kaixuan.weightloss.api.WeightRecordsListResponse { *; }
+-keepclassmembers class com.kaixuan.weightloss.api.WeightRecordsResponse { *; }
+-keepclassmembers class com.kaixuan.weightloss.api.WeightStatistics { *; }
+-keepclassmembers class com.kaixuan.weightloss.api.AddWeightRequest { *; }
+-keepclassmembers class com.kaixuan.weightloss.api.ChangePasswordRequest { *; }
