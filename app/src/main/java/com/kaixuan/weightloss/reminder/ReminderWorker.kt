@@ -20,6 +20,10 @@ class ReminderWorker(
 
     override fun doWork(): Result {
         showNotification()
+        // 重新调度下一次提醒，确保每天在固定时间执行
+        val hour = inputData.getInt("hour", 20)
+        val minute = inputData.getInt("minute", 0)
+        scheduleNext(applicationContext, hour, minute)
         return Result.success()
     }
 
@@ -69,6 +73,7 @@ class ReminderWorker(
                 set(Calendar.HOUR_OF_DAY, hour)
                 set(Calendar.MINUTE, minute)
                 set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
                 if (before(now)) {
                     add(Calendar.DAY_OF_MONTH, 1)
                 }
@@ -76,13 +81,48 @@ class ReminderWorker(
 
             val delay = target.timeInMillis - now.timeInMillis
 
-            val workRequest = PeriodicWorkRequestBuilder<ReminderWorker>(1, TimeUnit.DAYS)
+            val workRequest = OneTimeWorkRequestBuilder<ReminderWorker>()
                 .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+                .setInputData(
+                    workDataOf(
+                        "hour" to hour,
+                        "minute" to minute
+                    )
+                )
                 .build()
 
-            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            WorkManager.getInstance(context).enqueueUniqueWork(
                 WORK_NAME,
-                ExistingPeriodicWorkPolicy.UPDATE,
+                ExistingWorkPolicy.REPLACE,
+                workRequest
+            )
+        }
+
+        private fun scheduleNext(context: Context, hour: Int, minute: Int) {
+            val now = Calendar.getInstance()
+            val target = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, hour)
+                set(Calendar.MINUTE, minute)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+                add(Calendar.DAY_OF_MONTH, 1)
+            }
+
+            val delay = target.timeInMillis - now.timeInMillis
+
+            val workRequest = OneTimeWorkRequestBuilder<ReminderWorker>()
+                .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+                .setInputData(
+                    workDataOf(
+                        "hour" to hour,
+                        "minute" to minute
+                    )
+                )
+                .build()
+
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                WORK_NAME,
+                ExistingWorkPolicy.REPLACE,
                 workRequest
             )
         }
