@@ -1,47 +1,46 @@
 package com.kaixuan.weightloss.api
 
-import retrofit2.Response
 import retrofit2.http.*
 
 interface ApiService {
 
     // 认证接口
     @POST("auth/register")
-    suspend fun register(@Body request: RegisterRequest): Response<AuthResponse>
+    suspend fun register(@Body request: RegisterRequest): AuthResponse
 
     @POST("auth/login")
-    suspend fun login(@Body request: LoginRequest): Response<AuthResponse>
+    suspend fun login(@Body request: LoginRequest): AuthResponse
 
     @POST("auth/refresh")
-    suspend fun refreshToken(): Response<RefreshTokenResponse>
+    suspend fun refreshToken(): RefreshTokenResponse
 
     @POST("auth/logout")
-    suspend fun logout(): Response<SimpleResponse>
+    suspend fun logout(): SimpleResponse
 
     @PUT("auth/password")
-    suspend fun changePassword(@Body request: ChangePasswordRequest): Response<SimpleResponse>
+    suspend fun changePassword(@Body request: ChangePasswordRequest): SimpleResponse
 
     // 用户设置接口
     @GET("user/settings")
-    suspend fun getSettings(): Response<UserSettingsResponse>
+    suspend fun getSettings(): UserSettingsResponse
 
     @PUT("user/settings")
-    suspend fun updateSettings(@Body request: UpdateSettingsRequest): Response<SimpleResponse>
+    suspend fun updateSettings(@Body request: UpdateSettingsRequest): SimpleResponse
 
     // 体重记录接口
     @POST("weight/record")
-    suspend fun addWeightRecord(@Body request: AddWeightRequest): Response<WeightRecordResponse>
+    suspend fun addWeightRecord(@Body request: AddWeightRequest): WeightRecordResponse
 
     @GET("weight/records")
     suspend fun getWeightRecords(
         @Query("startDate") startDate: String? = null,
         @Query("endDate") endDate: String? = null,
         @Query("days") days: Int? = null
-    ): Response<WeightRecordsListResponse>
+    ): WeightRecordsListResponse
 
     @GET("weight/record/{date}")
-    suspend fun getWeightRecord(@Path("date") date: String): Response<WeightRecordResponse>
+    suspend fun getWeightRecord(@Path("date") date: String): WeightRecordResponse
 
     @DELETE("weight/record/{id}")
-    suspend fun deleteWeightRecord(@Path("id") id: String): Response<SimpleResponse>
+    suspend fun deleteWeightRecord(@Path("id") id: String): SimpleResponse
 }

@@ -11,17 +11,12 @@ class ApiRepository {
     // 认证
     suspend fun register(username: String, password: String, confirmPassword: String): ApiResult<AuthData> {
         return try {
-            val response = api.register(RegisterRequest(username, password, confirmPassword))
-            if (response.isSuccessful) {
-                val body = response.body()
-                if (body != null && body.code == 0 && body.data != null) {
-                    ApiClient.saveAuthData(body.data)
-                    ApiResult.Success(body.data)
-                } else {
-                    ApiResult.Error(body?.code ?: -1, body?.message ?: "注册失败")
-                }
+            val body = api.register(RegisterRequest(username, password, confirmPassword))
+            if (body.code == 0 && body.data != null) {
+                ApiClient.saveAuthData(body.data)
+                ApiResult.Success(body.data)
             } else {
-                ApiResult.Error(-1, "网络请求失败")
+                ApiResult.Error(body.code, body.message.ifEmpty { "注册失败" })
             }
         } catch (e: Exception) {
             ApiResult.Error(-1, e.message ?: "网络错误")
@@ -30,17 +25,12 @@ class ApiRepository {
 
     suspend fun login(username: String, password: String): ApiResult<AuthData> {
         return try {
-            val response = api.login(LoginRequest(username, password))
-            if (response.isSuccessful) {
-                val body = response.body()
-                if (body != null && body.code == 0 && body.data != null) {
-                    ApiClient.saveAuthData(body.data)
-                    ApiResult.Success(body.data)
-                } else {
-                    ApiResult.Error(body?.code ?: -1, body?.message ?: "登录失败")
-                }
+            val body = api.login(LoginRequest(username, password))
+            if (body.code == 0 && body.data != null) {
+                ApiClient.saveAuthData(body.data)
+                ApiResult.Success(body.data)
             } else {
-                ApiResult.Error(-1, "网络请求失败")
+                ApiResult.Error(body.code, body.message.ifEmpty { "登录失败" })
             }
         } catch (e: Exception) {
             ApiResult.Error(-1, e.message ?: "网络错误")
@@ -49,13 +39,9 @@ class ApiRepository {
 
     suspend fun logout(): ApiResult<Unit> {
         return try {
-            val response = api.logout()
+            api.logout()
             ApiClient.clearAuthData()
-            if (response.isSuccessful && response.body()?.code == 0) {
-                ApiResult.Success(Unit)
-            } else {
-                ApiResult.Success(Unit) // 即使服务端失败也清除本地token
-            }
+            ApiResult.Success(Unit)
         } catch (e: Exception) {
             ApiClient.clearAuthData()
             ApiResult.Success(Unit)
@@ -64,17 +50,12 @@ class ApiRepository {
 
     suspend fun refreshToken(): ApiResult<RefreshTokenData> {
         return try {
-            val response = api.refreshToken()
-            if (response.isSuccessful) {
-                val body = response.body()
-                if (body != null && body.code == 0 && body.data != null) {
-                    ApiClient.updateToken(body.data.token)
-                    ApiResult.Success(body.data)
-                } else {
-                    ApiResult.Error(body?.code ?: -1, body?.message ?: "刷新Token失败")
-                }
+            val body = api.refreshToken()
+            if (body.code == 0 && body.data != null) {
+                ApiClient.updateToken(body.data.token)
+                ApiResult.Success(body.data)
             } else {
-                ApiResult.Error(-1, "网络请求失败")
+                ApiResult.Error(body.code, body.message.ifEmpty { "刷新Token失败" })
             }
         } catch (e: Exception) {
             ApiResult.Error(-1, e.message ?: "网络错误")
@@ -83,16 +64,11 @@ class ApiRepository {
 
     suspend fun changePassword(oldPassword: String, newPassword: String): ApiResult<Unit> {
         return try {
-            val response = api.changePassword(ChangePasswordRequest(oldPassword, newPassword))
-            if (response.isSuccessful) {
-                val body = response.body()
-                if (body != null && body.code == 0) {
-                    ApiResult.Success(Unit)
-                } else {
-                    ApiResult.Error(body?.code ?: -1, body?.message ?: "修改密码失败")
-                }
+            val body = api.changePassword(ChangePasswordRequest(oldPassword, newPassword))
+            if (body.code == 0) {
+                ApiResult.Success(Unit)
             } else {
-                ApiResult.Error(-1, "网络请求失败")
+                ApiResult.Error(body.code, body.message.ifEmpty { "修改密码失败" })
             }
         } catch (e: Exception) {
             ApiResult.Error(-1, e.message ?: "网络错误")
@@ -102,16 +78,11 @@ class ApiRepository {
     // 用户设置
     suspend fun getSettings(): ApiResult<UserSettingsData> {
         return try {
-            val response = api.getSettings()
-            if (response.isSuccessful) {
-                val body = response.body()
-                if (body != null && body.code == 0 && body.data != null) {
-                    ApiResult.Success(body.data)
-                } else {
-                    ApiResult.Error(body?.code ?: -1, body?.message ?: "获取设置失败")
-                }
+            val body = api.getSettings()
+            if (body.code == 0 && body.data != null) {
+                ApiResult.Success(body.data)
             } else {
-                ApiResult.Error(-1, "网络请求失败")
+                ApiResult.Error(body.code, body.message.ifEmpty { "获取设置失败" })
             }
         } catch (e: Exception) {
             ApiResult.Error(-1, e.message ?: "网络错误")
@@ -126,18 +97,13 @@ class ApiRepository {
         reminderTime: String? = null
     ): ApiResult<Unit> {
         return try {
-            val response = api.updateSettings(
+            val body = api.updateSettings(
                 UpdateSettingsRequest(height, targetWeight, weightUnit, reminderEnabled, reminderTime)
             )
-            if (response.isSuccessful) {
-                val body = response.body()
-                if (body != null && body.code == 0) {
-                    ApiResult.Success(Unit)
-                } else {
-                    ApiResult.Error(body?.code ?: -1, body?.message ?: "更新设置失败")
-                }
+            if (body.code == 0) {
+                ApiResult.Success(Unit)
             } else {
-                ApiResult.Error(-1, "网络请求失败")
+                ApiResult.Error(body.code, body.message.ifEmpty { "更新设置失败" })
             }
         } catch (e: Exception) {
             ApiResult.Error(-1, e.message ?: "网络错误")
@@ -147,16 +113,11 @@ class ApiRepository {
     // 体重记录
     suspend fun addWeightRecord(date: String, weight: Float): ApiResult<WeightRecordData> {
         return try {
-            val response = api.addWeightRecord(AddWeightRequest(date, weight))
-            if (response.isSuccessful) {
-                val body = response.body()
-                if (body != null && body.code == 0 && body.data != null) {
-                    ApiResult.Success(body.data)
-                } else {
-                    ApiResult.Error(body?.code ?: -1, body?.message ?: "添加记录失败")
-                }
+            val body = api.addWeightRecord(AddWeightRequest(date, weight))
+            if (body.code == 0 && body.data != null) {
+                ApiResult.Success(body.data)
             } else {
-                ApiResult.Error(-1, "网络请求失败")
+                ApiResult.Error(body.code, body.message.ifEmpty { "添加记录失败" })
             }
         } catch (e: Exception) {
             ApiResult.Error(-1, e.message ?: "网络错误")
@@ -165,16 +126,11 @@ class ApiRepository {
 
     suspend fun getWeightRecords(days: Int? = null, startDate: String? = null, endDate: String? = null): ApiResult<WeightRecordsResponse> {
         return try {
-            val response = api.getWeightRecords(startDate, endDate, days)
-            if (response.isSuccessful) {
-                val body = response.body()
-                if (body != null && body.code == 0 && body.data != null) {
-                    ApiResult.Success(body.data)
-                } else {
-                    ApiResult.Error(body?.code ?: -1, body?.message ?: "获取记录失败")
-                }
+            val body = api.getWeightRecords(startDate, endDate, days)
+            if (body.code == 0 && body.data != null) {
+                ApiResult.Success(body.data)
             } else {
-                ApiResult.Error(-1, "网络请求失败")
+                ApiResult.Error(body.code, body.message.ifEmpty { "获取记录失败" })
             }
         } catch (e: Exception) {
             ApiResult.Error(-1, e.message ?: "网络错误")
@@ -183,16 +139,11 @@ class ApiRepository {
 
     suspend fun getWeightRecord(date: String): ApiResult<WeightRecordData> {
         return try {
-            val response = api.getWeightRecord(date)
-            if (response.isSuccessful) {
-                val body = response.body()
-                if (body != null && body.code == 0 && body.data != null) {
-                    ApiResult.Success(body.data)
-                } else {
-                    ApiResult.Error(body?.code ?: -1, body?.message ?: "获取记录失败")
-                }
+            val body = api.getWeightRecord(date)
+            if (body.code == 0 && body.data != null) {
+                ApiResult.Success(body.data)
             } else {
-                ApiResult.Error(-1, "网络请求失败")
+                ApiResult.Error(body.code, body.message.ifEmpty { "获取记录失败" })
             }
         } catch (e: Exception) {
             ApiResult.Error(-1, e.message ?: "网络错误")
@@ -201,16 +152,11 @@ class ApiRepository {
 
     suspend fun deleteWeightRecord(id: String): ApiResult<Unit> {
         return try {
-            val response = api.deleteWeightRecord(id)
-            if (response.isSuccessful) {
-                val body = response.body()
-                if (body != null && body.code == 0) {
-                    ApiResult.Success(Unit)
-                } else {
-                    ApiResult.Error(body?.code ?: -1, body?.message ?: "删除记录失败")
-                }
+            val body = api.deleteWeightRecord(id)
+            if (body.code == 0) {
+                ApiResult.Success(Unit)
             } else {
-                ApiResult.Error(-1, "网络请求失败")
+                ApiResult.Error(body.code, body.message.ifEmpty { "删除记录失败" })
             }
         } catch (e: Exception) {
             ApiResult.Error(-1, e.message ?: "网络错误")

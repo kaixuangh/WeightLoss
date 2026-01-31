@@ -2,119 +2,113 @@ package com.kaixuan.weightloss.api
 
 import com.google.gson.annotations.SerializedName
 
-// 通用响应基类
-open class BaseResponse(
-    val code: Int = 0,
-    val message: String = ""
-)
-
 // 认证响应
 data class AuthResponse(
-    val code: Int = 0,
-    val message: String = "",
-    val data: AuthData? = null
+    @SerializedName("code") val code: Int = 0,
+    @SerializedName("message") val message: String = "",
+    @SerializedName("data") val data: AuthData? = null
 )
 
 data class RefreshTokenResponse(
-    val code: Int = 0,
-    val message: String = "",
-    val data: RefreshTokenData? = null
+    @SerializedName("code") val code: Int = 0,
+    @SerializedName("message") val message: String = "",
+    @SerializedName("data") val data: RefreshTokenData? = null
 )
 
 data class SimpleResponse(
-    val code: Int = 0,
-    val message: String = ""
+    @SerializedName("code") val code: Int = 0,
+    @SerializedName("message") val message: String = ""
 )
 
 // 用户设置响应
 data class UserSettingsResponse(
-    val code: Int = 0,
-    val message: String = "",
-    val data: UserSettingsData? = null
+    @SerializedName("code") val code: Int = 0,
+    @SerializedName("message") val message: String = "",
+    @SerializedName("data") val data: UserSettingsData? = null
 )
 
 // 体重记录响应
 data class WeightRecordResponse(
-    val code: Int = 0,
-    val message: String = "",
-    val data: WeightRecordData? = null
+    @SerializedName("code") val code: Int = 0,
+    @SerializedName("message") val message: String = "",
+    @SerializedName("data") val data: WeightRecordData? = null
 )
 
 data class WeightRecordsListResponse(
-    val code: Int = 0,
-    val message: String = "",
-    val data: WeightRecordsResponse? = null
+    @SerializedName("code") val code: Int = 0,
+    @SerializedName("message") val message: String = "",
+    @SerializedName("data") val data: WeightRecordsResponse? = null
 )
 
 // 认证相关
 data class RegisterRequest(
-    val username: String,
-    val password: String,
-    val confirmPassword: String
+    @SerializedName("username") val username: String,
+    @SerializedName("password") val password: String,
+    @SerializedName("confirmPassword") val confirmPassword: String
 )
 
 data class LoginRequest(
-    val username: String,
-    val password: String
+    @SerializedName("username") val username: String,
+    @SerializedName("password") val password: String
 )
 
 data class AuthData(
-    val userId: String,
-    val username: String,
-    val token: String,
-    val expiresIn: Long
+    @SerializedName("userId") val userId: String,
+    @SerializedName("username") val username: String,
+    @SerializedName("token") val token: String,
+    @SerializedName("expiresIn") val expiresIn: Long
 )
 
 data class RefreshTokenData(
-    val token: String,
-    val expiresIn: Long
+    @SerializedName("token") val token: String,
+    @SerializedName("expiresIn") val expiresIn: Long
 )
 
 data class ChangePasswordRequest(
-    val oldPassword: String,
-    val newPassword: String
+    @SerializedName("oldPassword") val oldPassword: String,
+    @SerializedName("newPassword") val newPassword: String
 )
 
 // 用户设置相关
 data class UserSettingsData(
-    val height: Float?,
-    val targetWeight: Float?,
-    val weightUnit: String?,
-    val reminderEnabled: Boolean?,
-    val reminderTime: String?
+    @SerializedName("height") val height: Float?,
+    @SerializedName("targetWeight") val targetWeight: Float?,
+    @SerializedName("weightUnit") val weightUnit: String?,
+    @SerializedName("reminderEnabled") val reminderEnabled: Boolean?,
+    @SerializedName("reminderTime") val reminderTime: String?
 )
 
 data class UpdateSettingsRequest(
-    val height: Float? = null,
-    val targetWeight: Float? = null,
-    val weightUnit: String? = null,
-    val reminderEnabled: Boolean? = null,
-    val reminderTime: String? = null
+    @SerializedName("height") val height: Float? = null,
+    @SerializedName("targetWeight") val targetWeight: Float? = null,
+    @SerializedName("weightUnit") val weightUnit: String? = null,
+    @SerializedName("reminderEnabled") val reminderEnabled: Boolean? = null,
+    @SerializedName("reminderTime") val reminderTime: String? = null
 )
 
 // 体重记录相关
 data class AddWeightRequest(
-    val date: String,
-    val weight: Float
+    @SerializedName("date") val date: String,
+    @SerializedName("weight") val weight: Float
 )
 
 data class WeightRecordData(
-    val id: String,
-    val date: String,
-    val weight: Float,
-    val createdAt: String? = null,
-    val updatedAt: String? = null
+    @SerializedName("id") val id: String,
+    @SerializedName("date") val date: String,
+    @SerializedName("weight") val weight: Float,
+    @SerializedName("createdAt") val createdAt: String? = null,
+    @SerializedName("updatedAt") val updatedAt: String? = null
 )
 
 data class WeightRecordsResponse(
-    val records: List<WeightRecordData>,
-    val statistics: WeightStatistics?
+    @SerializedName("records") val records: List<WeightRecordData>,
+    @SerializedName("statistics") val statistics: WeightStatistics?
 )
 
 data class WeightStatistics(
-    val maxWeight: Float,
-    val minWeight: Float,
-    val avgWeight: Float,
-    val latestWeight: Float,
-    val change: Float
+    @SerializedName("maxWeight") val maxWeight: Float,
+    @SerializedName("minWeight") val minWeight: Float,
+    @SerializedName("avgWeight") val avgWeight: Float,
+    @SerializedName("latestWeight") val latestWeight: Float,
+    @SerializedName("change") val change: Float
 )

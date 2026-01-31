@@ -21,9 +21,17 @@
 #-renamesourcefileattribute SourceFile
 
 # ==================== Retrofit ====================
+# Keep generic signature of Call, Response (R8 full mode strips signatures from non-kept items).
+-keep,allowobfuscation,allowshrinking interface retrofit2.Call
+-keep,allowobfuscation,allowshrinking class retrofit2.Response
+
+# With R8 full mode, it sees no subtypes of Retrofit interfaces since they are created with a Proxy
+# and). R8 full mode requires that interfaces be kept.
+-keep,allowobfuscation interface * extends retrofit2.Call
+
 # Retrofit does reflection on generic parameters. InnerClasses is required to use Signature and
 # EnclosingMethod is required to use InnerClasses.
--keepattributes Signature, InnerClasses, EnclosingMethod
+-keepattributes Signature, InnerClasses, EnclosingMethod, Exceptions
 
 # Retrofit does reflection on method and parameter annotations.
 -keepattributes RuntimeVisibleAnnotations, RuntimeVisibleParameterAnnotations
@@ -49,18 +57,23 @@
 -dontwarn retrofit2.KotlinExtensions
 -dontwarn retrofit2.KotlinExtensions$*
 
-# With R8 full mode, it sees no subtypes of Retrofit interfaces since they are created with a Proxy
-# and). R8 full mode requires that interfaces be kept.
--if interface * { @retrofit2.http.* <methods>; }
--keep,allowobfuscation interface <1>
+# Keep Retrofit
+-keep class retrofit2.** { *; }
+-keepclasseswithmembers class * {
+    @retrofit2.http.* <methods>;
+}
 
-# Keep inherited services.
--if interface * { @retrofit2.http.* <methods>; }
--keep,allowobfuscation interface * extends <1>
-
-# With R8 full mode generic signatures are stripped for classes that are not
-# kept., while the, Retrofit uses the signature to instantiate types for call adapters.
--keep,allowobfuscation,allowshrinking class retrofit2.Response
+# Keep Kotlin coroutines
+-keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}
+-keepnames class kotlinx.coroutines.CoroutineExceptionHandler {}
+-keepclassmembers class kotlinx.coroutines.** {
+    volatile <fields>;
+}
+-keepclassmembers class kotlin.coroutines.SafeContinuation {
+    volatile <fields>;
+}
+-dontwarn kotlinx.coroutines.**
+-keep class kotlin.coroutines.Continuation
 
 # ==================== OkHttp ====================
 -dontwarn okhttp3.**
