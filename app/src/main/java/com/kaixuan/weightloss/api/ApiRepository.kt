@@ -62,6 +62,25 @@ class ApiRepository {
         }
     }
 
+    suspend fun refreshToken(): ApiResult<RefreshTokenData> {
+        return try {
+            val response = api.refreshToken()
+            if (response.isSuccessful) {
+                val body = response.body()
+                if (body != null && body.code == 0 && body.data != null) {
+                    ApiClient.updateToken(body.data.token)
+                    ApiResult.Success(body.data)
+                } else {
+                    ApiResult.Error(body?.code ?: -1, body?.message ?: "刷新Token失败")
+                }
+            } else {
+                ApiResult.Error(-1, "网络请求失败")
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(-1, e.message ?: "网络错误")
+        }
+    }
+
     suspend fun changePassword(oldPassword: String, newPassword: String): ApiResult<Unit> {
         return try {
             val response = api.changePassword(ChangePasswordRequest(oldPassword, newPassword))

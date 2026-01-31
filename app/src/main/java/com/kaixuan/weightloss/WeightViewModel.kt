@@ -59,9 +59,32 @@ class WeightViewModel(application: Application) : AndroidViewModel(application) 
     init {
         ApiClient.init(application)
         // 同步读取登录状态，避免页面闪烁
-        _isLoggedIn.value = ApiClient.isLoggedInSync()
-        if (_isLoggedIn.value) {
-            loadData()
+        val hasToken = ApiClient.isLoggedInSync()
+        _isLoggedIn.value = hasToken
+        if (hasToken) {
+            // 冷启动时刷新 token
+            refreshTokenAndLoadData()
+        }
+    }
+
+    private fun refreshTokenAndLoadData() {
+        viewModelScope.launch {
+            when (val result = apiRepository.refreshToken()) {
+                is ApiResult.Success -> {
+                    // token 刷新成功，加载数据
+                    loadData()
+                }
+                is ApiResult.Error -> {
+                    // token 无效或过期，清除登录状态
+                    if (result.code == 2001 || result.code == 2002) {
+                        ApiClient.clearAuthData()
+                        _isLoggedIn.value = false
+                    } else {
+                        // 其他错误（如网络问题），仍然尝试加载数据
+                        loadData()
+                    }
+                }
+            }
         }
     }
 
