@@ -2,7 +2,7 @@
 
 ## 基础信息
 
-- **Base URL**: `https://api.example.com/v1`
+- **Base URL**: `http://okeng.top:8080/api`
 - **数据格式**: JSON
 - **认证方式**: Bearer Token (JWT)
 
