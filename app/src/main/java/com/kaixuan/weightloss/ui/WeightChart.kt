@@ -7,7 +7,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.kaixuan.weightloss.data.WeightRecord
+import com.kaixuan.weightloss.api.WeightRecordData
+import com.kaixuan.weightloss.data.WeightUnit
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberBottomAxis
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberStartAxis
@@ -27,14 +28,15 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
-fun WeightChart(records: List<WeightRecord>, weightUnit: com.kaixuan.weightloss.data.WeightUnit = com.kaixuan.weightloss.data.WeightUnit.KG) {
+fun WeightChart(records: List<WeightRecordData>, weightUnit: WeightUnit = WeightUnit.KG) {
     val primaryColor = MaterialTheme.colorScheme.primary
     val onSurfaceColor = MaterialTheme.colorScheme.onSurface
     val surfaceColor = MaterialTheme.colorScheme.surface
 
     val modelProducer = remember { CartesianChartModelProducer.build() }
 
-    val dateFormat = remember { SimpleDateFormat("MM/dd", Locale.getDefault()) }
+    val inputFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
+    val displayFormat = remember { SimpleDateFormat("MM/dd", Locale.getDefault()) }
 
     remember(records, weightUnit) {
         if (records.isNotEmpty()) {
@@ -60,7 +62,11 @@ fun WeightChart(records: List<WeightRecord>, weightUnit: com.kaixuan.weightloss.
             val index = targets.firstOrNull()?.x?.toInt() ?: return@rememberDefaultCartesianMarker ""
             if (index in records.indices) {
                 val record = records[index]
-                val date = dateFormat.format(Date(record.date))
+                val date = try {
+                    inputFormat.parse(record.date)?.let { displayFormat.format(it) } ?: record.date
+                } catch (e: Exception) {
+                    record.date
+                }
                 val displayWeight = record.weight * weightUnit.factor
                 "$date: %.1f ${weightUnit.label}".format(displayWeight)
             } else ""
@@ -98,7 +104,12 @@ fun WeightChart(records: List<WeightRecord>, weightUnit: com.kaixuan.weightloss.
             ),
             valueFormatter = { value, _, _ ->
                 if (value.toInt() in records.indices) {
-                    dateFormat.format(Date(records[value.toInt()].date))
+                    val record = records[value.toInt()]
+                    try {
+                        inputFormat.parse(record.date)?.let { displayFormat.format(it) } ?: ""
+                    } catch (e: Exception) {
+                        ""
+                    }
                 } else {
                     ""
                 }

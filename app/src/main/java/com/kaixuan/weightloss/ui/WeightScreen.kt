@@ -16,7 +16,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.kaixuan.weightloss.TimeRange
 import com.kaixuan.weightloss.WeightViewModel
-import com.kaixuan.weightloss.data.WeightRecord
+import com.kaixuan.weightloss.api.WeightRecordData
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -309,7 +309,7 @@ fun TimeRangeSelector(
 }
 
 @Composable
-fun WeightStats(records: List<WeightRecord>, weightUnit: com.kaixuan.weightloss.data.WeightUnit) {
+fun WeightStats(records: List<WeightRecordData>, weightUnit: com.kaixuan.weightloss.data.WeightUnit) {
     if (records.isEmpty()) return
 
     val factor = weightUnit.factor

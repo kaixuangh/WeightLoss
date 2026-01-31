@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.runtime.*
+import com.kaixuan.weightloss.ui.LoginScreen
 import com.kaixuan.weightloss.ui.SettingsScreen
 import com.kaixuan.weightloss.ui.WeightScreen
 import com.kaixuan.weightloss.ui.theme.WeightLossTheme
@@ -18,9 +19,15 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             WeightLossTheme {
+                val isLoggedIn by viewModel.isLoggedIn.collectAsState()
                 var showSettings by remember { mutableStateOf(false) }
 
-                if (showSettings) {
+                if (!isLoggedIn) {
+                    LoginScreen(
+                        viewModel = viewModel,
+                        onLoginSuccess = { }
+                    )
+                } else if (showSettings) {
                     SettingsScreen(
                         viewModel = viewModel,
                         onBack = { showSettings = false }

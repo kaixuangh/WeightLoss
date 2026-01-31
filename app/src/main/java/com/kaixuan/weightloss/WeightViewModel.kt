@@ -3,19 +3,20 @@ package com.kaixuan.weightloss
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.kaixuan.weightloss.api.ApiClient
+import com.kaixuan.weightloss.api.ApiRepository
+import com.kaixuan.weightloss.api.ApiResult
+import com.kaixuan.weightloss.api.WeightRecordData
 import com.kaixuan.weightloss.data.UserSettings
-import com.kaixuan.weightloss.data.UserSettingsRepository
-import com.kaixuan.weightloss.data.WeightDatabase
-import com.kaixuan.weightloss.data.WeightRecord
 import com.kaixuan.weightloss.data.WeightUnit
 import com.kaixuan.weightloss.reminder.ReminderWorker
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
@@ -28,12 +29,11 @@ enum class TimeRange(val days: Int, val label: String) {
 }
 
 class WeightViewModel(application: Application) : AndroidViewModel(application) {
-    private val dao = WeightDatabase.getDatabase(application).weightDao()
-    private val settingsRepo = UserSettingsRepository(application)
+    private val apiRepository = ApiRepository()
     private val dateKeyFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
-    private val _records = MutableStateFlow<List<WeightRecord>>(emptyList())
-    val records: StateFlow<List<WeightRecord>> = _records.asStateFlow()
+    private val _records = MutableStateFlow<List<WeightRecordData>>(emptyList())
+    val records: StateFlow<List<WeightRecordData>> = _records.asStateFlow()
 
     private val _selectedRange = MutableStateFlow(TimeRange.MONTH)
     val selectedRange: StateFlow<TimeRange> = _selectedRange.asStateFlow()
@@ -44,47 +44,132 @@ class WeightViewModel(application: Application) : AndroidViewModel(application) 
     private val _latestWeight = MutableStateFlow<Float?>(null)
     val latestWeight: StateFlow<Float?> = _latestWeight.asStateFlow()
 
+    private val _isLoggedIn = MutableStateFlow(false)
+    val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+    private val _loginSuccess = MutableSharedFlow<Unit>()
+    val loginSuccess = _loginSuccess.asSharedFlow()
+
     init {
+        ApiClient.init(application)
+        checkLoginStatus()
+    }
+
+    private fun checkLoginStatus() {
+        viewModelScope.launch {
+            _isLoggedIn.value = ApiClient.isLoggedIn()
+            if (_isLoggedIn.value) {
+                loadData()
+            }
+        }
+    }
+
+    fun loadData() {
         loadRecords(TimeRange.MONTH)
         loadSettings()
-        loadLatestWeight()
     }
 
     private fun loadSettings() {
         viewModelScope.launch {
-            settingsRepo.settings.collect { settings ->
-                _settings.value = settings
+            when (val result = apiRepository.getSettings()) {
+                is ApiResult.Success -> {
+                    val data = result.data
+                    _settings.value = UserSettings(
+                        targetWeight = data.targetWeight ?: 0f,
+                        height = data.height ?: 0f,
+                        weightUnit = when (data.weightUnit) {
+                            "JIN" -> WeightUnit.JIN
+                            else -> WeightUnit.KG
+                        },
+                        reminderEnabled = data.reminderEnabled ?: false,
+                        reminderHour = data.reminderTime?.split(":")?.getOrNull(0)?.toIntOrNull() ?: 8,
+                        reminderMinute = data.reminderTime?.split(":")?.getOrNull(1)?.toIntOrNull() ?: 0
+                    )
+                }
+                is ApiResult.Error -> {
+                    // 使用默认设置
+                }
             }
         }
     }
 
-    private fun loadLatestWeight() {
+    fun login(username: String, password: String) {
         viewModelScope.launch {
-            dao.getLatestRecord().collect { record ->
-                _latestWeight.value = record?.weight
+            _isLoading.value = true
+            _errorMessage.value = null
+
+            when (val result = apiRepository.login(username, password)) {
+                is ApiResult.Success -> {
+                    _isLoggedIn.value = true
+                    loadData()
+                    _loginSuccess.emit(Unit)
+                }
+                is ApiResult.Error -> {
+                    _errorMessage.value = result.message
+                }
             }
+            _isLoading.value = false
         }
+    }
+
+    fun register(username: String, password: String, confirmPassword: String) {
+        viewModelScope.launch {
+            if (password != confirmPassword) {
+                _errorMessage.value = "两次密码不一致"
+                return@launch
+            }
+
+            _isLoading.value = true
+            _errorMessage.value = null
+
+            when (val result = apiRepository.register(username, password, confirmPassword)) {
+                is ApiResult.Success -> {
+                    _isLoggedIn.value = true
+                    loadData()
+                    _loginSuccess.emit(Unit)
+                }
+                is ApiResult.Error -> {
+                    _errorMessage.value = result.message
+                }
+            }
+            _isLoading.value = false
+        }
+    }
+
+    fun logout() {
+        viewModelScope.launch {
+            apiRepository.logout()
+            _isLoggedIn.value = false
+            _records.value = emptyList()
+            _settings.value = UserSettings()
+            _latestWeight.value = null
+        }
+    }
+
+    fun clearError() {
+        _errorMessage.value = null
     }
 
     fun addRecord(weight: Float) {
         viewModelScope.launch {
             // 根据单位转换为 kg 存储
             val weightInKg = weight / _settings.value.weightUnit.factor
-            val now = System.currentTimeMillis()
-            val dateKey = dateKeyFormat.format(Date(now))
+            val dateKey = dateKeyFormat.format(Date())
 
-            val existingRecord = dao.getRecordByDateKey(dateKey)
-            if (existingRecord != null) {
-                dao.updateByDateKey(dateKey, weightInKg, now)
-            } else {
-                val record = WeightRecord(
-                    date = now,
-                    dateKey = dateKey,
-                    weight = weightInKg
-                )
-                dao.insert(record)
+            when (val result = apiRepository.addWeightRecord(dateKey, weightInKg)) {
+                is ApiResult.Success -> {
+                    loadRecords(_selectedRange.value)
+                }
+                is ApiResult.Error -> {
+                    _errorMessage.value = result.message
+                }
             }
-            loadRecords(_selectedRange.value)
         }
     }
 
@@ -95,12 +180,14 @@ class WeightViewModel(application: Application) : AndroidViewModel(application) 
 
     private fun loadRecords(range: TimeRange) {
         viewModelScope.launch {
-            val calendar = Calendar.getInstance()
-            calendar.add(Calendar.DAY_OF_YEAR, -range.days)
-            val startDate = calendar.timeInMillis
-
-            dao.getRecordsSince(startDate).collect { records ->
-                _records.value = records
+            when (val result = apiRepository.getWeightRecords(days = range.days)) {
+                is ApiResult.Success -> {
+                    _records.value = result.data.records
+                    _latestWeight.value = result.data.statistics?.latestWeight
+                }
+                is ApiResult.Error -> {
+                    // 保持现有数据
+                }
             }
         }
     }
@@ -109,29 +196,54 @@ class WeightViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             // 转换为 kg 存储
             val weightInKg = weight / _settings.value.weightUnit.factor
-            settingsRepo.updateTargetWeight(weightInKg)
+            when (apiRepository.updateSettings(targetWeight = weightInKg)) {
+                is ApiResult.Success -> {
+                    _settings.value = _settings.value.copy(targetWeight = weightInKg)
+                }
+                is ApiResult.Error -> {}
+            }
         }
     }
 
     fun updateHeight(height: Float) {
         viewModelScope.launch {
-            settingsRepo.updateHeight(height)
+            when (apiRepository.updateSettings(height = height)) {
+                is ApiResult.Success -> {
+                    _settings.value = _settings.value.copy(height = height)
+                }
+                is ApiResult.Error -> {}
+            }
         }
     }
 
     fun updateWeightUnit(unit: WeightUnit) {
         viewModelScope.launch {
-            settingsRepo.updateWeightUnit(unit)
+            when (apiRepository.updateSettings(weightUnit = unit.name)) {
+                is ApiResult.Success -> {
+                    _settings.value = _settings.value.copy(weightUnit = unit)
+                }
+                is ApiResult.Error -> {}
+            }
         }
     }
 
     fun updateReminder(enabled: Boolean, hour: Int, minute: Int) {
         viewModelScope.launch {
-            settingsRepo.updateReminder(enabled, hour, minute)
-            if (enabled) {
-                ReminderWorker.schedule(getApplication(), hour, minute)
-            } else {
-                ReminderWorker.cancel(getApplication())
+            val reminderTime = String.format(Locale.getDefault(), "%02d:%02d", hour, minute)
+            when (apiRepository.updateSettings(reminderEnabled = enabled, reminderTime = reminderTime)) {
+                is ApiResult.Success -> {
+                    _settings.value = _settings.value.copy(
+                        reminderEnabled = enabled,
+                        reminderHour = hour,
+                        reminderMinute = minute
+                    )
+                    if (enabled) {
+                        ReminderWorker.schedule(getApplication(), hour, minute)
+                    } else {
+                        ReminderWorker.cancel(getApplication())
+                    }
+                }
+                is ApiResult.Error -> {}
             }
         }
     }
