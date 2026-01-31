@@ -109,6 +109,13 @@ object ApiClient {
         return getToken() != null
     }
 
+    fun isLoggedInSync(): Boolean {
+        val ctx = context ?: return false
+        return runBlocking {
+            ctx.dataStore.data.map { it[TokenKeys.TOKEN] }.first() != null
+        }
+    }
+
     suspend fun getUsername(): String? {
         val ctx = context ?: return null
         return ctx.dataStore.data.map { it[TokenKeys.USERNAME] }.first()

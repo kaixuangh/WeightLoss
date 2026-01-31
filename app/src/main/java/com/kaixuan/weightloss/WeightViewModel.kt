@@ -44,8 +44,8 @@ class WeightViewModel(application: Application) : AndroidViewModel(application) 
     private val _latestWeight = MutableStateFlow<Float?>(null)
     val latestWeight: StateFlow<Float?> = _latestWeight.asStateFlow()
 
-    private val _isLoggedIn = MutableStateFlow<Boolean?>(null) // null 表示正在检查登录状态
-    val isLoggedIn: StateFlow<Boolean?> = _isLoggedIn.asStateFlow()
+    private val _isLoggedIn = MutableStateFlow(false)
+    val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -58,16 +58,10 @@ class WeightViewModel(application: Application) : AndroidViewModel(application) 
 
     init {
         ApiClient.init(application)
-        checkLoginStatus()
-    }
-
-    private fun checkLoginStatus() {
-        viewModelScope.launch {
-            val loggedIn = ApiClient.isLoggedIn()
-            _isLoggedIn.value = loggedIn
-            if (loggedIn) {
-                loadData()
-            }
+        // 同步读取登录状态，避免页面闪烁
+        _isLoggedIn.value = ApiClient.isLoggedInSync()
+        if (_isLoggedIn.value) {
+            loadData()
         }
     }
 
