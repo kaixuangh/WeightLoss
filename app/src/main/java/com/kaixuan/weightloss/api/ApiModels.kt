@@ -2,11 +2,48 @@ package com.kaixuan.weightloss.api
 
 import com.google.gson.annotations.SerializedName
 
-// 通用响应包装
-data class ApiResponse<T>(
-    val code: Int,
-    val message: String,
-    val data: T? = null
+// 通用响应基类
+open class BaseResponse(
+    val code: Int = 0,
+    val message: String = ""
+)
+
+// 认证响应
+data class AuthResponse(
+    val code: Int = 0,
+    val message: String = "",
+    val data: AuthData? = null
+)
+
+data class RefreshTokenResponse(
+    val code: Int = 0,
+    val message: String = "",
+    val data: RefreshTokenData? = null
+)
+
+data class SimpleResponse(
+    val code: Int = 0,
+    val message: String = ""
+)
+
+// 用户设置响应
+data class UserSettingsResponse(
+    val code: Int = 0,
+    val message: String = "",
+    val data: UserSettingsData? = null
+)
+
+// 体重记录响应
+data class WeightRecordResponse(
+    val code: Int = 0,
+    val message: String = "",
+    val data: WeightRecordData? = null
+)
+
+data class WeightRecordsListResponse(
+    val code: Int = 0,
+    val message: String = "",
+    val data: WeightRecordsResponse? = null
 )
 
 // 认证相关
